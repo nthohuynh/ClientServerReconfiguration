@@ -1,0 +1,6 @@
+
+Private-Package:  \
+	client
+Include-Resource: \
+	resources
+Bundle-Name: Client

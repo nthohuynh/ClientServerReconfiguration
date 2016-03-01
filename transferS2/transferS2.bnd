@@ -1,0 +1,10 @@
+
+Private-Package:  \
+	transferS2
+Include-Resource: \
+	resources
+	
+	
+Bundle-Name: TransferS2
+Export-Package:  \
+	transferS2

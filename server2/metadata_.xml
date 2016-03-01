@@ -1,0 +1,15 @@
+<ipojo>
+<component name="Server2" classname="server2.Server2">
+	<properties>
+        <property name="buffer" field="buffer"/>
+        <property name="_enableProcess" field="enableProcess"/>
+	</properties>
+</component> 
+<instance name="iServer2" component="Server2">
+  
+</instance> 
+</ipojo>
+
+<!-- property value="*" name="osgi.remote.interfaces"/ -->
+<!-- property value="org.apache.cxf.ws" name="osgi.remote.configuration.type"/> -->
+<!-- property value="http://192.168.56.1:9090/service" name="osgi.remote.configuration.pojo.address"/>  -->

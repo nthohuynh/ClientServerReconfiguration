@@ -1,23 +1,20 @@
 package transferservice;
 
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.rmi.RemoteException;
 
-import org.apache.cxf.message.Message;
+import org.apache.commons.collections4.queue.CircularFifoQueue;
 import org.apache.mina.transport.socket.nio.NioDatagramSession;
-import org.apache.mina.transport.socket.nio.NioSession;
-import org.msgpack.MessagePack;
 
-import myCXF.destination.IoSessionInputStream;
-import myCXF.destination.MyDestination.UDPDestinationOutputStream;
-import myCXF.destination.MyMessage;
+import utils.MyMessage;
+
+
  
 public interface TransferService extends java.rmi.Remote{
-	MyMessage getMessage() throws RemoteException;
+	CircularFifoQueue <MyMessage> getBuffer() throws RemoteException;
 	
+	void setBuffer(CircularFifoQueue <MyMessage> msg) throws RemoteException;
+
 	void setMessage(MyMessage msg) throws RemoteException;
-
-
 	
+	void setNioDatagramSession(NioDatagramSession nio) throws RemoteException;
 }

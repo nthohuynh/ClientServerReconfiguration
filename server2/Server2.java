@@ -1,4 +1,4 @@
-package server1;
+package server2;
 
 
 import java.io.ByteArrayInputStream;
@@ -47,6 +47,8 @@ import org.apache.cxf.workqueue.WorkQueueManager;
 import org.apache.cxf.ws.addressing.AttributedURIType;
 import org.apache.cxf.ws.addressing.EndpointReferenceType;
 import org.apache.felix.ipojo.annotations.Component;
+import org.apache.felix.ipojo.annotations.Instantiate;
+import org.apache.felix.ipojo.annotations.Property;
 import org.apache.mina.core.buffer.IoBuffer;
 import org.apache.mina.core.session.AttributeKey;
 import org.apache.mina.core.session.IdleStatus;
@@ -60,25 +62,41 @@ import utils.IoSessionInputStream;
 import utils.IoSessionOutputStream;
 import utils.MyMessage;
 import applicationservice.Service;
-@Component(name="Server1")
-
-public class Server1 {
+@Component(name="Server2")
+@Instantiate(name="iServer2")
+public class Server2 {
 	
-	boolean enableProcess = false;
-	public CircularFifoQueue <MyMessage> buffer;
+	boolean enableProcess = true;
 
-	public Server1() {
-		
-		System.out.println("Starting Server 1");
+	public CircularFifoQueue <MyMessage> buffer ;
+
+	public Server2() {
 		buffer = new CircularFifoQueue<MyMessage>(50);
 		
-		Server1Impl implementor = new Server1Impl();
+//		 
+//		Thread th = new Thread() {
+//			public void run() {
+//				while (true) {
+//					System.out.println("size of buffers: "+buffer.size());
+//					try {
+//						Thread.sleep(2000);
+//					} catch (InterruptedException e) {
+//						// TODO Auto-generated catch block
+//						e.printStackTrace();
+//					}
+//				}
+//			}
+//		};
+//		th.start();
+		
+		System.out.println("Starting Server 2");
+		Server2Impl implementor = new Server2Impl();
 		JaxWsServerFactoryBean svrFactory1 = new JaxWsServerFactoryBean();
 		MyDestinationFactory destFac = new MyDestinationFactory();
 		svrFactory1.setDestinationFactory(destFac);
 		
 		svrFactory1.setServiceClass(Service.class);
-		svrFactory1.setAddress("udp://192.168.56.22:9000/HelloWorld");
+		svrFactory1.setAddress("udp://192.168.56.2:9002/HelloWorld");
 		svrFactory1.setServiceBean(implementor);
 		svrFactory1.getOutInterceptors().add(new StreamOutInterceptor());
 		Map<String, Object> props = new HashMap<String,Object>();
@@ -87,8 +105,13 @@ public class Server1 {
 		Server server1 = svrFactory1.create();
 		server1.start();
 	}
+	@Property(name="buffer")
 	public void setBuffer(CircularFifoQueue<MyMessage> buffer) {
 		this.buffer = buffer;
+	}
+	@Property(name="enableProcess")
+	public void setEnableProcess(boolean enableProcess) {
+		this.enableProcess = enableProcess;
 	}
 	public CircularFifoQueue<MyMessage> getBuffer() {
 		return this.buffer;
@@ -150,8 +173,8 @@ class MyDestination extends AbstractDestination implements Serializable {
 				public void run() {
 					while (true) {
 						try {
-								Thread.sleep(1000);
-								
+								Thread.sleep(2000);
+								//System.out.println((!buffer.isEmpty()) +":::"+ enableProcess);
 								if ((!buffer.isEmpty()) && enableProcess) {
 								
 									System.out.println("get in buffer to process");
@@ -562,7 +585,6 @@ class MyDestinationFactory extends AbstractTransportFactory implements Destinati
     }
 
 
- 
    
     public Set<String> getUriPrefixes() {
         return uriPrefixes;

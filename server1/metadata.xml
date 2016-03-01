@@ -1,6 +1,5 @@
 <ipojo>
 <instance name="iServer1" component="Server1">
-	<!---->
 	
 </instance>
 </ipojo>
