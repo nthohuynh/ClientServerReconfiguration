@@ -5,8 +5,10 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
+import java.util.Properties;
 
 import org.apache.commons.collections4.queue.CircularFifoQueue;
+import org.apache.felix.ipojo.ComponentInstance;
 import org.apache.felix.ipojo.Factory;
 import org.apache.felix.ipojo.InstanceManager;
 import org.apache.felix.ipojo.annotations.Component;
@@ -63,7 +65,7 @@ class TransferServer extends UnicastRemoteObject implements TransferService, Ser
 		}
 		public CircularFifoQueue <MyMessage> getBuffer() throws RemoteException {
 			// TODO Auto-generated method stub
-			
+			System.out.println("start get buffer");
 			//introspect the buffer of Server1 and getBuffer
 			for (Factory factory : factories) {
 				if (factory.getName().equals("Server1")) { //Client is default name of a component name
@@ -84,6 +86,31 @@ class TransferServer extends UnicastRemoteObject implements TransferService, Ser
 			// TODO Auto-generated method stub
 			
 		}
+		
+		
+		public void processControl(boolean bool) {
+			for (Factory factory : factories) {
+				if (factory.getName().equals("Server1")) { //Client is default name of a component name
+					ComponentInstance im = (ComponentInstance) factory.getInstances().get(0);
+			    	
+					//get buffer
+//					boolean buffer = (boolean) (InstanceManager)im.getFieldValue("enableProcess");
+//					System.out.println(buffer);
+					
+					ComponentInstance ci = (ComponentInstance) im;
+					Properties props = new Properties();
+					Boolean bool1 = new Boolean(bool);
+					props.put("enableProcess", bool1);
+					im.reconfigure(props);
+					
+					boolean buffer = (boolean) ( (InstanceManager)im).getFieldValue("enableProcess");
+					if (buffer) System.out.println("start process");
+					else System.out.println("stop process");
+				}
+				
+	    	}
+		}
+		
 		
 		public void setNioDatagramSession(NioDatagramSession nio)
 				throws RemoteException {

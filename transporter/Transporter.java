@@ -24,16 +24,17 @@ public class Transporter {
 		int serverPort1 = 9001;
 		
 
-		String serverAddress2 = "192.168.56.2";//mint
+		String serverAddress2 = "192.168.56.2";//mint 
 		int serverPort2 = 9003;
-		
-
-		
-		
 		try {
+			
 			registry1 = LocateRegistry.getRegistry(serverAddress1, serverPort1);
+			
 			rmiServer1 = (TransferService) (registry1.lookup("rmiServer1"));
+			
+			
 			CircularFifoQueue<MyMessage> msg = rmiServer1.getBuffer();
+			System.out.println("get ok " );
 			System.out.println("get ok " + msg.size());
 	
 			

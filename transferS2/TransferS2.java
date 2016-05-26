@@ -11,6 +11,7 @@ import java.util.Properties;
 import org.apache.commons.collections4.queue.CircularFifoQueue;
 import org.apache.felix.ipojo.ComponentInstance;
 import org.apache.felix.ipojo.Factory;
+import org.apache.felix.ipojo.InstanceManager;
 import org.apache.felix.ipojo.annotations.Component;
 import org.apache.felix.ipojo.annotations.Instantiate;
 import org.apache.felix.ipojo.annotations.Requires;
@@ -53,7 +54,7 @@ class TransferServer extends UnicastRemoteObject implements TransferService, Ser
 			this.thisAddress = add;
 			this.thisPort = port; 
 			System.setProperty("java.security.policy", "java.security.AllPermission");
-			//System.setProperty("java.rmi.server.hostname", "192.168.56.2");
+//			System.setProperty("java.rmi.server.hostname", "192.168.56.2");
 			try {
 				// create the registry and bind the name and object.
 				
@@ -86,12 +87,35 @@ class TransferServer extends UnicastRemoteObject implements TransferService, Ser
 			// TODO Auto-generated method stub
 			System.out.println(msg.getId());
 		}
-		@Override
-		public void setNioDatagramSession(NioDatagramSession nio)
-				throws RemoteException {
-			// TODO Auto-generated method stub
-			
+		
+		public void processControl(boolean bool) {
+			for (Factory factory : factories) {
+				if (factory.getName().equals("Server2")) { //Client is default name of a component name
+					ComponentInstance im = (ComponentInstance) factory.getInstances().get(0);
+			    	
+					//get buffer
+//					boolean buffer = (boolean) (InstanceManager)im.getFieldValue("enableProcess");
+//					System.out.println(buffer);
+					
+					ComponentInstance ci = (ComponentInstance) im;
+					Properties props = new Properties();
+					Boolean bool1 = new Boolean(bool);
+					props.put("enableProcess", bool1);
+					im.reconfigure(props);
+					
+					boolean buffer = (boolean) ( (InstanceManager)im).getFieldValue("enableProcess");
+					if (buffer) System.out.println("start process");
+					else System.out.println("stop process");
+				}
+				
+	    	}
 		}
+//		@Override
+//		public void setNioDatagramSession(NioDatagramSession nio)
+//				throws RemoteException {
+//			// TODO Auto-generated method stub
+//			
+//		}
 		
 		
 }

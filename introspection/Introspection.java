@@ -2,6 +2,9 @@ package introspection;
 
 
 
+import java.util.Properties;
+
+import org.apache.felix.ipojo.ComponentInstance;
 import org.apache.felix.ipojo.Factory;
 import org.apache.felix.ipojo.InstanceManager;
 import org.apache.felix.ipojo.annotations.Component;
@@ -25,8 +28,13 @@ public class Introspection {
 				//get buffer
 				boolean buffer = (boolean) im.getFieldValue("enableProcess");
 				
+				ComponentInstance ci = (ComponentInstance) factory.getInstances().get(0);
+				Properties props = new Properties();
+				props.put("enableProcess", false);
+				ci.reconfigure(props);
 				
-					System.out.println("introspect: "+buffer);
+				
+				System.out.println("introspect: "+buffer);
 				
 //				get metadata of pojo
 //				im.getPojoObjects(); //list pojo object

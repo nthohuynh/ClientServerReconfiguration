@@ -73,22 +73,6 @@ public class Server2 {
 	public Server2() {
 		buffer = new CircularFifoQueue<MyMessage>(50);
 		
-//		 
-//		Thread th = new Thread() {
-//			public void run() {
-//				while (true) {
-//					System.out.println("size of buffers: "+buffer.size());
-//					try {
-//						Thread.sleep(2000);
-//					} catch (InterruptedException e) {
-//						// TODO Auto-generated catch block
-//						e.printStackTrace();
-//					}
-//				}
-//			}
-//		};
-//		th.start();
-		
 		System.out.println("Starting Server 2");
 		Server2Impl implementor = new Server2Impl();
 		JaxWsServerFactoryBean svrFactory1 = new JaxWsServerFactoryBean();

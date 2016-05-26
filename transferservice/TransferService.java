@@ -14,7 +14,9 @@ public interface TransferService extends java.rmi.Remote{
 	
 	void setBuffer(CircularFifoQueue <MyMessage> msg) throws RemoteException;
 
-	void setMessage(MyMessage msg) throws RemoteException;
+	void processControl(boolean bool) throws RemoteException;
+ 
+	//void setMessage(MyMessage msg) throws RemoteException;
 	
-	void setNioDatagramSession(NioDatagramSession nio) throws RemoteException;
+//	void setNioDatagramSession(NioDatagramSession nio) throws RemoteException;
 }

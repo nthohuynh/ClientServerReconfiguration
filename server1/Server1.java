@@ -47,6 +47,9 @@ import org.apache.cxf.workqueue.WorkQueueManager;
 import org.apache.cxf.ws.addressing.AttributedURIType;
 import org.apache.cxf.ws.addressing.EndpointReferenceType;
 import org.apache.felix.ipojo.annotations.Component;
+import org.apache.felix.ipojo.annotations.Invalidate;
+import org.apache.felix.ipojo.annotations.Property;
+import org.apache.felix.ipojo.annotations.Validate;
 import org.apache.mina.core.buffer.IoBuffer;
 import org.apache.mina.core.session.AttributeKey;
 import org.apache.mina.core.session.IdleStatus;
@@ -64,16 +67,17 @@ import applicationservice.Service;
 
 public class Server1 {
 	
-	boolean enableProcess = false;
+	public boolean enableProcess = true;
 	public CircularFifoQueue <MyMessage> buffer;
-
+	Server server1;
+	JaxWsServerFactoryBean svrFactory1;
 	public Server1() {
 		
 		System.out.println("Starting Server 1");
 		buffer = new CircularFifoQueue<MyMessage>(50);
 		
 		Server1Impl implementor = new Server1Impl();
-		JaxWsServerFactoryBean svrFactory1 = new JaxWsServerFactoryBean();
+		svrFactory1 = new JaxWsServerFactoryBean();
 		MyDestinationFactory destFac = new MyDestinationFactory();
 		svrFactory1.setDestinationFactory(destFac);
 		
@@ -81,19 +85,35 @@ public class Server1 {
 		svrFactory1.setAddress("udp://192.168.56.22:9000/HelloWorld");
 		svrFactory1.setServiceBean(implementor);
 		svrFactory1.getOutInterceptors().add(new StreamOutInterceptor());
-		Map<String, Object> props = new HashMap<String,Object>();
-		props.put("cxf.synchronous.timeout", new Integer(600000));
-		svrFactory1.setProperties(props);
-		Server server1 = svrFactory1.create();
+		//Map<String, Object> props = new HashMap<String,Object>();
+		//props.put("cxf.synchronous.timeout", new Integer(600000));
+		//svrFactory1.setProperties(props);
+		server1 = svrFactory1.create();
 		server1.start();
 	}
+	@Property(name="enableProcess")
+	public void setEnableProcess(boolean enableProcess) {
+		this.enableProcess = enableProcess;
+	}
+	
 	public void setBuffer(CircularFifoQueue<MyMessage> buffer) {
 		this.buffer = buffer;
 	}
 	public CircularFifoQueue<MyMessage> getBuffer() {
 		return this.buffer;
 	}
-	
+	 @Validate
+	 public void start() throws Exception {
+		 this.enableProcess = true;
+		 server1 = svrFactory1.create();
+		 server1.start();
+	 }
+	 @Invalidate
+	 public void stop() throws Exception {
+		 this.enableProcess = false;
+		 server1.stop();
+		 svrFactory1.destroy();
+	 }
 
 @SuppressWarnings("serial")
 @XmlRootElement
@@ -423,7 +443,7 @@ class MyDestination extends AbstractDestination implements Serializable {
 						
 						byte[] bytes = output.toByteArray(); //transfer 
 						myMsg.byteInputStream = bytes;
-						System.out.println("add to queue");
+						//System.out.println("add to queue");
 						buffer.add(myMsg);
 						//addToQueue(myMsg);
 						
