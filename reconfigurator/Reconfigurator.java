@@ -219,10 +219,7 @@ public class Reconfigurator extends JFrame implements ActionListener{
 		}
 		return result;
 	}
-//	
-//	public static void main(String []args) {
-//		new Reconfigurator();
-//	}
+
 
 
 	

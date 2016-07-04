@@ -1,6 +1,5 @@
 package server1;
 
-
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -63,63 +62,67 @@ import utils.IoSessionInputStream;
 import utils.IoSessionOutputStream;
 import utils.MyMessage;
 import applicationservice.Service;
-@Component(name="Server1")
 
+@Component(name = "Server1")
 public class Server1 {
-	
+
 	public boolean enableProcess = true;
-	public CircularFifoQueue <MyMessage> buffer;
+	public CircularFifoQueue<MyMessage> buffer;
 	Server server1;
 	JaxWsServerFactoryBean svrFactory1;
+
 	public Server1() {
-		
+
 		System.out.println("Starting Server 1");
 		buffer = new CircularFifoQueue<MyMessage>(50);
-		
+
 		Server1Impl implementor = new Server1Impl();
 		svrFactory1 = new JaxWsServerFactoryBean();
 		MyDestinationFactory destFac = new MyDestinationFactory();
 		svrFactory1.setDestinationFactory(destFac);
-		
+
 		svrFactory1.setServiceClass(Service.class);
 		svrFactory1.setAddress("udp://192.168.56.22:9000/HelloWorld");
 		svrFactory1.setServiceBean(implementor);
 		svrFactory1.getOutInterceptors().add(new StreamOutInterceptor());
-		//Map<String, Object> props = new HashMap<String,Object>();
-		//props.put("cxf.synchronous.timeout", new Integer(600000));
-		//svrFactory1.setProperties(props);
+		// Map<String, Object> props = new HashMap<String,Object>();
+		// props.put("cxf.synchronous.timeout", new Integer(600000));
+		// svrFactory1.setProperties(props);
 		server1 = svrFactory1.create();
 		server1.start();
 	}
-	@Property(name="enableProcess")
+
+	@Property(name = "enableProcess")
 	public void setEnableProcess(boolean enableProcess) {
 		this.enableProcess = enableProcess;
 	}
-	
+
 	public void setBuffer(CircularFifoQueue<MyMessage> buffer) {
 		this.buffer = buffer;
 	}
+
 	public CircularFifoQueue<MyMessage> getBuffer() {
 		return this.buffer;
 	}
-	 @Validate
-	 public void start() throws Exception {
-		 this.enableProcess = true;
-		 server1 = svrFactory1.create();
-		 server1.start();
-	 }
-	 @Invalidate
-	 public void stop() throws Exception {
-		 this.enableProcess = false;
-		 server1.stop();
-		 svrFactory1.destroy();
-	 }
 
-@SuppressWarnings("serial")
-@XmlRootElement
-class MyDestination extends AbstractDestination implements Serializable {
-		private final Logger LOG = LogUtils
-				.getL7dLogger(MyDestination.class);
+	@Validate
+	public void start() throws Exception {
+		this.enableProcess = true;
+		server1 = svrFactory1.create();
+		server1.start();
+	}
+
+	@Invalidate
+	public void stop() throws Exception {
+		this.enableProcess = false;
+		server1.stop();
+		svrFactory1.destroy();
+	}
+
+	@SuppressWarnings("serial")
+	@XmlRootElement
+	class MyDestination extends AbstractDestination implements Serializable {
+		private final Logger LOG = LogUtils.getL7dLogger(MyDestination.class);
 		private final AttributeKey KEY_IN = new AttributeKey(
 				StreamIoHandler.class, "in");
 		private final AttributeKey KEY_OUT = new AttributeKey(
@@ -129,12 +132,12 @@ class MyDestination extends AbstractDestination implements Serializable {
 		AutomaticWorkQueue queue;
 		volatile MulticastSocket mcast;
 		InetSocketAddress isa = null;
-	
+
 		public MyDestination(Bus b, EndpointReferenceType ref, EndpointInfo ei) {
 			super(b, ref, ei);
 			try {
 				URI uri = new URI(this.getAddress().getAddress().getValue());
-				
+
 				if (StringUtils.isEmpty(uri.getHost())) {
 					String s = uri.getSchemeSpecificPart();
 					if (s.startsWith("//:")) {
@@ -148,71 +151,77 @@ class MyDestination extends AbstractDestination implements Serializable {
 				} else {
 					isa = new InetSocketAddress(uri.getHost(), uri.getPort());
 				}
-		
 
-					acceptor = new NioDatagramAcceptor();
-					acceptor.setHandler(new UDPIOHandler());
+				acceptor = new NioDatagramAcceptor();
+				acceptor.setHandler(new UDPIOHandler());
 
-					acceptor.setDefaultLocalAddress(isa);
-					DatagramSessionConfig dcfg = acceptor.getSessionConfig();
-					dcfg.setReadBufferSize(64 * 1024);
-					dcfg.setSendBufferSize(64 * 1024);
-					dcfg.setReuseAddress(true);
-					acceptor.bind();
-			
+				acceptor.setDefaultLocalAddress(isa);
+				DatagramSessionConfig dcfg = acceptor.getSessionConfig();
+				dcfg.setReadBufferSize(64 * 1024);
+				dcfg.setSendBufferSize(64 * 1024);
+				dcfg.setReuseAddress(true);
+				acceptor.bind();
+
 			} catch (Exception ex) {
 				ex.printStackTrace();
 				throw new RuntimeException(ex);
 			}
-			
+
 			Thread th = new Thread() {
 				@SuppressWarnings("unused")
 				public void run() {
 					while (true) {
 						try {
-								Thread.sleep(1000);
-								
-								if ((!buffer.isEmpty()) && enableProcess) {
-								
-									System.out.println("get in buffer to process");
-									MyMessage myMsg = buffer.poll();
-									final MessageImpl m = new MessageImpl();
-									Exchange exchange = new ExchangeImpl();
-									exchange.setDestination(MyDestination.this);
-									m.setDestination(MyDestination.this);
-									exchange.setInMessage(m);
-									
-									byte[] byteInputStream = myMsg.byteInputStream;
-									NioDatagramSession niosession = myMsg.session; 
-		
-									System.out.println();
-									//ByteArrayInputStream in_t = new ByteArrayInputStream(byteInputStream);
-									IoBuffer ioBuffer = IoBuffer.allocate(256);
-									ioBuffer.setAutoExpand(true);
-									ioBuffer.mark();
-									ioBuffer.put(byteInputStream);
-									ioBuffer.reset();
-									IoSessionInputStream ioses =  new IoSessionInputStream();
-									ioses.setBuffer(ioBuffer);
-									InputStream in = ioses; 
+							Thread.sleep(1000);
 
-							        m.setContent(InputStream.class, in);
-							        IoSession session = (IoSession)niosession; //new NioDatagramSession();
-									
-									SocketAddress remoteAddress = session.getRemoteAddress();
-									SocketAddress localAddress =  isa; //session.getLocalAddress();
+							if ((!buffer.isEmpty()) && enableProcess) {
 
-									IoSession newsession = null;
-									newsession = acceptor.newSession(remoteAddress, localAddress);
-									
-									OutputStream out = new IoSessionOutputStream(newsession);
-									out = new UDPDestinationOutputStream(out);
-									m.put(UDPConnectionInfo.class, new UDPConnectionInfo(newsession, out,in));
-									
-							        getMessageObserver().onMessage(m);
-							      
-								}
-							
+								System.out.println("get in buffer to process");
+								MyMessage myMsg = buffer.poll();
+								final MessageImpl m = new MessageImpl();
+								Exchange exchange = new ExchangeImpl();
+								exchange.setDestination(MyDestination.this);
+								m.setDestination(MyDestination.this);
+								exchange.setInMessage(m);
+
+								byte[] byteInputStream = myMsg.byteInputStream;
+								NioDatagramSession niosession = myMsg.session;
+
+								System.out.println();
+								// ByteArrayInputStream in_t = new
+								// ByteArrayInputStream(byteInputStream);
+								IoBuffer ioBuffer = IoBuffer.allocate(256);
+								ioBuffer.setAutoExpand(true);
+								ioBuffer.mark();
+								ioBuffer.put(byteInputStream);
+								ioBuffer.reset();
+								IoSessionInputStream ioses = new IoSessionInputStream();
+								ioses.setBuffer(ioBuffer);
+								InputStream in = ioses;
+
+								m.setContent(InputStream.class, in);
+								IoSession session = (IoSession) niosession; // new
+																			// NioDatagramSession();
+
+								SocketAddress remoteAddress = session
+										.getRemoteAddress();
+								SocketAddress localAddress = isa; // session.getLocalAddress();
+
+								IoSession newsession = null;
+								newsession = acceptor.newSession(remoteAddress,
+										localAddress);
+
+								OutputStream out = new IoSessionOutputStream(
+										newsession);
+								out = new UDPDestinationOutputStream(out);
+								m.put(UDPConnectionInfo.class,
+										new UDPConnectionInfo(newsession, out,
+												in));
+
+								getMessageObserver().onMessage(m);
+
+							}
+
 						} catch (Exception e) {
 							// TODO Auto-generated catch block
 							// e.printStackTrace();
@@ -222,7 +231,7 @@ class MyDestination extends AbstractDestination implements Serializable {
 			};
 			th.start();
 		}
-		
+
 		@XmlRootElement
 		class MCastListener implements Runnable {
 			public void run() {
@@ -234,7 +243,7 @@ class MyDestination extends AbstractDestination implements Serializable {
 						byte bytes[] = new byte[64 * 1024];
 						final DatagramPacket p = new DatagramPacket(bytes,
 								bytes.length);
-						
+
 						mcast.receive(p);
 
 						LoadingByteArrayOutputStream out = new LoadingByteArrayOutputStream() {
@@ -247,9 +256,9 @@ class MyDestination extends AbstractDestination implements Serializable {
 							}
 						};
 
-
-						UDPConnectionInfo info = new UDPConnectionInfo(null, out,
-								new ByteArrayInputStream(bytes, 0, p.getLength()));
+						UDPConnectionInfo info = new UDPConnectionInfo(null,
+								out, new ByteArrayInputStream(bytes, 0,
+										p.getLength()));
 
 						final MessageImpl m = new MessageImpl();
 						final Exchange exchange = new ExchangeImpl();
@@ -260,7 +269,7 @@ class MyDestination extends AbstractDestination implements Serializable {
 						m.put(UDPConnectionInfo.class, info);
 						queue.execute(new Runnable() {
 							public void run() {
-								
+
 								getMessageObserver().onMessage(m);
 							}
 						});
@@ -278,13 +287,14 @@ class MyDestination extends AbstractDestination implements Serializable {
 			if (my.getExchange().isOneWay()) {
 				return null;
 			}
-			final UDPConnectionInfo info = inMessage.get(UDPConnectionInfo.class);
+			final UDPConnectionInfo info = inMessage
+					.get(UDPConnectionInfo.class);
 
 			AbstractBackChannelConduit backChannelConduit = new AbstractBackChannelConduit() {
 				public void prepare(Message message) throws IOException {
 					message.setContent(OutputStream.class, info.out);
 				}
-			}; 
+			};
 
 			return backChannelConduit;
 		}
@@ -296,7 +306,7 @@ class MyDestination extends AbstractDestination implements Serializable {
 		}
 
 		protected void activate() {
-			
+
 			WorkQueueManager queuem = bus.getExtension(WorkQueueManager.class);
 			queue = queuem.getNamedWorkQueue("udp-transport");
 			if (queue == null) {
@@ -339,9 +349,10 @@ class MyDestination extends AbstractDestination implements Serializable {
 					dcfg.setReadBufferSize(64 * 1024);
 					dcfg.setSendBufferSize(64 * 1024);
 					dcfg.setReuseAddress(true);
-					
-					//Binds to the default local address(es) and start to accept incoming connections.
-					acceptor.bind(); 
+
+					// Binds to the default local address(es) and start to
+					// accept incoming connections.
+					acceptor.bind();
 				}
 			} catch (Exception ex) {
 				ex.printStackTrace();
@@ -360,73 +371,72 @@ class MyDestination extends AbstractDestination implements Serializable {
 				mcast = null;
 			}
 		}
-		
+
 		@XmlRootElement
 		public class UDPConnectionInfo {
-			
+
 			IoSession session;
 			@XmlElement
 			OutputStream out;
 			@XmlElement
 			InputStream in;
+
 			public UDPConnectionInfo() {
-				
+
 			}
-			
+
 			public UDPConnectionInfo(IoSession io, OutputStream o, InputStream i) {
 				session = io;
 				out = o;
 				in = i;
 			}
 		}
+
 		@XmlRootElement
 		class UDPIOHandler extends StreamIoHandler {
 			public OutputStream out;
 			public IoSessionInputStream in;
-			
+
 			@Override
 			public void sessionOpened(IoSession session) {
-				
+
 				// Set timeouts
 				session.getConfig().setWriteTimeout(getWriteTimeout());
 				session.getConfig().setIdleTime(IdleStatus.READER_IDLE,
 						getReadTimeout());
 				// Create streams
 				InputStream in = new IoSessionInputStream();
-				
+
 				out = new IoSessionOutputStream(session);
 				session.setAttribute(KEY_IN, in);
 				session.setAttribute(KEY_OUT, out);
-				
-				
+
 				processStreamIo(session, in, out);
 
 			}
 
-		
 			protected void processStreamIo(IoSession session, InputStream in,
 					OutputStream out) {
-				
+
 				final MessageImpl m = new MessageImpl();
 				final Exchange exchange = new ExchangeImpl();
 				exchange.setDestination(MyDestination.this);
 				m.setDestination(MyDestination.this);
 				exchange.setInMessage(m);
-				
-		
+
 				m.setContent(InputStream.class, in);
 				out = new UDPDestinationOutputStream(out);
-				m.put(UDPConnectionInfo.class, new UDPConnectionInfo(session, out,
-						in));
+				m.put(UDPConnectionInfo.class, new UDPConnectionInfo(session,
+						out, in));
 
 				@SuppressWarnings("unused")
 				final OutputStream outp = out;
 				final InputStream inp = in;
-				final NioDatagramSession nioSes = (NioDatagramSession)session;
-				
+				final NioDatagramSession nioSes = (NioDatagramSession) session;
+
 				queue.execute(new Runnable() {
 					public void run() {
-						
+
 						MyMessage myMsg = new MyMessage();
 						myMsg.session = nioSes;
 						InputStream in_ = inp;
@@ -434,25 +444,26 @@ class MyDestination extends AbstractDestination implements Serializable {
 						byte[] buffers = new byte[8192];
 						try {
 							for (int length = 0; (length = in_.read(buffers)) > 0;) {
-							    output.write(buffers, 0, length);
+								output.write(buffers, 0, length);
 							}
 						} catch (IOException e) {
 							// TODO Auto-generated catch block
 							e.printStackTrace();
 						}
-						
-						byte[] bytes = output.toByteArray(); //transfer 
+
+						byte[] bytes = output.toByteArray(); // transfer
 						myMsg.byteInputStream = bytes;
-						//System.out.println("add to queue");
+						// System.out.println("add to queue");
 						buffer.add(myMsg);
-						//addToQueue(myMsg);
-						
+						// addToQueue(myMsg);
+
 					}
 				});
 			}
-			
+
 			public void sessionClosed(IoSession session) throws Exception {
-				final InputStream in = (InputStream) session.getAttribute(KEY_IN);
+				final InputStream in = (InputStream) session
+						.getAttribute(KEY_IN);
 				final OutputStream out = (OutputStream) session
 						.getAttribute(KEY_OUT);
 				try {
@@ -463,7 +474,7 @@ class MyDestination extends AbstractDestination implements Serializable {
 			}
 
 			public void messageReceived(IoSession session, Object buf) {
-				//final IoSessionInputStream 
+				// final IoSessionInputStream
 				in = (IoSessionInputStream) session.getAttribute(KEY_IN);
 				in.setBuffer((IoBuffer) buf);
 			}
@@ -493,6 +504,7 @@ class MyDestination extends AbstractDestination implements Serializable {
 				}
 			}
 		}
+
 		@XmlRootElement
 		private class StreamIoException extends RuntimeException {
 			private static final long serialVersionUID = 3976736960742503222L;
@@ -501,8 +513,10 @@ class MyDestination extends AbstractDestination implements Serializable {
 				super(cause);
 			}
 		}
+
 		@XmlRootElement
-		public class UDPDestinationOutputStream extends OutputStream  implements Serializable{
+		public class UDPDestinationOutputStream extends OutputStream implements
+				Serializable {
 			final OutputStream out;
 			IoBuffer buffer = IoBuffer.allocate(64 * 1024 - 42); // max size
 			boolean closed;
@@ -541,64 +555,59 @@ class MyDestination extends AbstractDestination implements Serializable {
 				out.close();
 			}
 		}
-}
+	}
 
+	class MyDestinationFactory extends AbstractTransportFactory implements
+			DestinationFactory {
 
-class MyDestinationFactory extends AbstractTransportFactory implements DestinationFactory {
+		final static String TRANSPORT_ID = "http://cxf.apache.org/transports/udp";
 
-	final static String TRANSPORT_ID = "http://cxf.apache.org/transports/udp";
+		final Logger LOG = LogUtils.getL7dLogger(MyDestinationFactory.class);
+		final List<String> DEFAULT_NAMESPACES = Arrays.asList(TRANSPORT_ID);
+		final Set<String> URI_PREFIXES = new HashSet<String>();
+		{
+			URI_PREFIXES.add("udp://");
+		}
 
-    final Logger LOG = LogUtils.getL7dLogger(MyDestinationFactory.class);
-    final List<String> DEFAULT_NAMESPACES = Arrays.asList(TRANSPORT_ID);
-    final Set<String> URI_PREFIXES = new HashSet<String>();
-    {
-        URI_PREFIXES.add("udp://");
-    }
-    
-    private Set<String> uriPrefixes = new HashSet<String>(URI_PREFIXES);
+		private Set<String> uriPrefixes = new HashSet<String>(URI_PREFIXES);
 
-    MyDestination myDest = null;
-    
-    public MyDestinationFactory() {
-        super(Arrays.asList(TRANSPORT_ID));
-        System.out.println("start my destination factory");
-    }
-    
-    public Destination getDestination(EndpointInfo ei, Bus bus) throws IOException {
-        return getDestination(ei, null, bus);
-    }
+		MyDestination myDest = null;
 
+		public MyDestinationFactory() {
+			super(Arrays.asList(TRANSPORT_ID));
+			System.out.println("start my destination factory");
+		}
 
-    
-    protected Destination getDestination(EndpointInfo ei,
-                                         EndpointReferenceType reference,
-                                         Bus bus)
-        throws IOException {
-        if (reference == null) {
-            reference = createReference(ei);
-        }
-        myDest = new MyDestination(bus, reference, ei); 
-        return myDest;
-    }
+		public Destination getDestination(EndpointInfo ei, Bus bus)
+				throws IOException {
+			return getDestination(ei, null, bus);
+		}
 
+		protected Destination getDestination(EndpointInfo ei,
+				EndpointReferenceType reference, Bus bus) throws IOException {
+			if (reference == null) {
+				reference = createReference(ei);
+			}
+			myDest = new MyDestination(bus, reference, ei);
+			return myDest;
+		}
 
- 
-   
-    public Set<String> getUriPrefixes() {
-        return uriPrefixes;
-    }
-    public void setUriPrefixes(Set<String> s) {
-        uriPrefixes = s;
-    }
-    EndpointReferenceType createReference(EndpointInfo ei) {
-        EndpointReferenceType epr = new EndpointReferenceType();
-        AttributedURIType address = new AttributedURIType();
-        address.setValue(ei.getAddress());
-        epr.setAddress(address);
-        return epr;
-    }
+		public Set<String> getUriPrefixes() {
+			return uriPrefixes;
+		}
 
+		public void setUriPrefixes(Set<String> s) {
+			uriPrefixes = s;
+		}
 
-}
+		EndpointReferenceType createReference(EndpointInfo ei) {
+			EndpointReferenceType epr = new EndpointReferenceType();
+			AttributedURIType address = new AttributedURIType();
+			address.setValue(ei.getAddress());
+			epr.setAddress(address);
+			return epr;
+		}
+
+	}
 
 }
